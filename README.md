@@ -1,16 +1,16 @@
-# APISIX ACME Service (Aliyun DNS)
+# APISIX ACME Automatic renewal
 
 这是一个使用 Go 编写的自动 https 证书续期服务，适配APISIX 网关。
 
 ## 功能
 1. 自动使用 Let's Encrypt 申请/续期证书。
-2. 使用 Aliyun DNS API 自动添加验证 TXT 记录。
+2. 使用云厂商 DNS API 自动添加验证 TXT 记录。
 3. 申请成功后自动将证书推送到 APISIX Admin API。
 4. 每天检查一次证书过期时间，默认小于80天自动续期。
 
 ## 技术栈
 - Go 1.25+
-- [lego](https://github.com/go-acme/lego) (ACME 客户端)
+- [lego](https://github.com/go-acme/lego)
 
 ## 快速开始
 
@@ -24,7 +24,7 @@ email: "your-email@example.com"
 certificates:
   - domains: [ "example.com" ]
     dns_provider: "alidns"
-    # 证书过期前多少天进行续期，默认 80 天
+    # 证书过期前多少天进行续期，默认 80 天(建议每个申请的证书使用不同的过期时间,防止集中申请会封ip) 
   #    renew_before_expiry_days: 80
   - domains: [ "example.com" ]
     dns_provider: "alidns"
