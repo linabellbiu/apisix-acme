@@ -1,33 +1,34 @@
 package apisix
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
+	"time"
+
+	"github.com/go-resty/resty/v2"
 
 	"apisix-acme/internal/config"
 )
 
 type Client struct {
-	BaseURL string
-	APIKey  string
+	client *resty.Client
 }
 
 func NewClient(cfg config.ApisixConfig) *Client {
+	r := resty.New()
+	r.SetTimeout(30 * time.Second)
+	r.SetBaseURL(strings.TrimRight(cfg.AdminURL, "/"))
+	r.SetHeader("Content-Type", "application/json")
+	r.SetHeader("X-API-KEY", cfg.AdminKey)
+
 	return &Client{
-		BaseURL: strings.TrimRight(cfg.AdminURL, "/"),
-		APIKey:  cfg.AdminKey,
+		client: r,
 	}
 }
 
 func (c *Client) UpdateSSL(domains []string, cert, key []byte) error {
 	// Create an ID based on the primary domain
 	sslID := strings.ReplaceAll(domains[0], ".", "_")
-
-	url := fmt.Sprintf("%s/apisix/admin/ssls/%s", c.BaseURL, sslID)
 
 	payload := map[string]interface{}{
 		"cert": string(cert),
@@ -36,27 +37,16 @@ func (c *Client) UpdateSSL(domains []string, cert, key []byte) error {
 		"id":   sslID,
 	}
 
-	body, err := json.Marshal(payload)
+	resp, err := c.client.R().
+		SetBody(payload).
+		Put(fmt.Sprintf("/apisix/admin/ssls/%s", sslID))
+
 	if err != nil {
-		return err
+		return fmt.Errorf("请求 APISIX 失败: %v", err)
 	}
 
-	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-API-KEY", c.APIKey)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("调用 APISIX 失败: %s - %s", resp.Status, string(respBody))
+	if resp.IsError() {
+		return fmt.Errorf("调用 APISIX 失败: %s - %s", resp.Status(), resp.String())
 	}
 
 	return nil

@@ -74,11 +74,12 @@ func (m *Manager) Run() {
 	m.safeProcess()
 
 	// 启动定时任务
-	c := cron.New()
-	_, err := c.AddFunc(m.Cfg.CronSchedule, func() {
+	c := cron.New(
+		cron.WithLocation(time.Local),
+	)
+	if _, err := c.AddFunc(m.Cfg.CronSchedule, func() {
 		m.safeProcess()
-	})
-	if err != nil {
+	}); err != nil {
 		log.Fatalf("无法添加定时任务: %v", err)
 	}
 
@@ -130,8 +131,8 @@ func (m *Manager) process(certCfg config.Certificate) error {
 	}
 
 	// 配置 DNS Provider
-	// 使用各个证书独立的 provider 和配置
-	provider, err := dns.NewDNSProvider(certCfg.DNSProvider, certCfg.DNSProviderConfig)
+	// 使用证书指定的 Provider 类型，配合全局的 Provider 配置
+	provider, err := dns.NewDNSProvider(certCfg.DNSProvider, m.Cfg.DNSProviderConfig)
 	if err != nil {
 		return fmt.Errorf("DNS Provider 初始化失败: %v", err)
 	}
@@ -156,10 +157,10 @@ func (m *Manager) process(certCfg config.Certificate) error {
 
 	needsRenew := true
 	if exists(certPath) {
-		valid, err := isCertValid(certPath)
+		valid, err := isCertValid(certPath, certCfg.RenewBeforeExpiryDays)
 		if err == nil && valid {
 			needsRenew = false
-			log.Println("证书有效期充足 (大于30天)，无需更新")
+			log.Printf("证书有效期充足 (大于%d天)，无需更新", certCfg.RenewBeforeExpiryDays)
 		}
 	}
 
@@ -228,7 +229,7 @@ func (m *Manager) saveUser(u *User) {
 	_ = os.WriteFile(filepath.Join(m.Cfg.DataDir, "user.json"), data, 0600)
 }
 
-func isCertValid(path string) (bool, error) {
+func isCertValid(path string, renewBeforeDays int) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return false, err
@@ -241,8 +242,8 @@ func isCertValid(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// Renew 30 days before
-	if time.Until(crt.NotAfter) < 30*24*time.Hour {
+
+	if time.Until(crt.NotAfter) < time.Duration(renewBeforeDays)*24*time.Hour {
 		return false, nil
 	}
 	return true, nil

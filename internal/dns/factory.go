@@ -27,7 +27,6 @@ func NewDNSProvider(providerType string, config map[string]string) (challenge.Pr
 		return cloudflare.NewDNSProvider()
 	case "dnspod":
 		return dnspod.NewDNSProvider()
-	// Add more providers here as needed
 	default:
 		return nil, fmt.Errorf("unsupported dns provider: %s", providerType)
 	}

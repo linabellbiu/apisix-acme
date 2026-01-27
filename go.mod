@@ -4,6 +4,7 @@ go 1.25.3
 
 require (
 	github.com/go-acme/lego/v4 v4.31.0
+	github.com/go-resty/resty/v2 v2.17.1
 	github.com/robfig/cron/v3 v3.0.1
 	gopkg.in/yaml.v3 v3.0.1
 )

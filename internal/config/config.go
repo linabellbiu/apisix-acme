@@ -8,8 +8,9 @@ import (
 
 // Config 全局配置对象
 type Config struct {
-	Email        string        `yaml:"email"`
-	Certificates []Certificate `yaml:"certificates"`
+	Email             string            `yaml:"email"`
+	Certificates      []Certificate     `yaml:"certificates"`
+	DNSProviderConfig map[string]string `yaml:"dns_provider_config"`
 
 	Apisix ApisixConfig `yaml:"apisix"`
 
@@ -20,9 +21,9 @@ type Config struct {
 
 // Certificate 定义一组需要申请证书的域名及其 DNS 服务商配置
 type Certificate struct {
-	Domains           []string          `yaml:"domains"`
-	DNSProvider       string            `yaml:"dns_provider"`
-	DNSProviderConfig map[string]string `yaml:"dns_provider_config"`
+	Domains               []string `yaml:"domains"`
+	DNSProvider           string   `yaml:"dns_provider"`
+	RenewBeforeExpiryDays int      `yaml:"renew_before_expiry_days"`
 }
 
 type ApisixConfig struct {
@@ -48,6 +49,13 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	if cfg.CronSchedule == "" {
 		cfg.CronSchedule = "0 0 * * *" // 默认每天凌晨0点执行
+	}
+
+	// 为每个证书配置设置默认续期时间
+	for i := range cfg.Certificates {
+		if cfg.Certificates[i].RenewBeforeExpiryDays <= 0 {
+			cfg.Certificates[i].RenewBeforeExpiryDays = 80 // 默认提前80天续期
+		}
 	}
 
 	if cfg.LetsEncryptEnv == "" {
