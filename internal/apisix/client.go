@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 
-	"apisix-acme/internal/config"
+	"github.com/linabellbiu/apisix-acme/internal/config"
 )
 
 type Client struct {

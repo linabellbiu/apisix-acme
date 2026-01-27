@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log"
 
-	"apisix-acme/internal/cert"
-	"apisix-acme/internal/config"
+	"github.com/linabellbiu/apisix-acme/internal/cert"
+	"github.com/linabellbiu/apisix-acme/internal/config"
 )
 
 func main() {

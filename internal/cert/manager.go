@@ -20,9 +20,9 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/robfig/cron/v3"
 
-	"apisix-acme/internal/apisix"
-	"apisix-acme/internal/config"
-	"apisix-acme/internal/dns"
+	"github.com/linabellbiu/apisix-acme/internal/apisix"
+	"github.com/linabellbiu/apisix-acme/internal/config"
+	"github.com/linabellbiu/apisix-acme/internal/dns"
 )
 
 // Manager 证书生命周期管理器

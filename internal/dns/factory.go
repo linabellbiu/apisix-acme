@@ -9,6 +9,8 @@ import (
 	"github.com/go-acme/lego/v4/providers/dns/alidns"
 	"github.com/go-acme/lego/v4/providers/dns/cloudflare"
 	"github.com/go-acme/lego/v4/providers/dns/dnspod"
+	"github.com/go-acme/lego/v4/providers/dns/huaweicloud"
+	"github.com/go-acme/lego/v4/providers/dns/tencentcloud"
 )
 
 // NewDNSProvider 基于配置的类型和环境变量映射创建一个 DNS Provider
@@ -27,6 +29,11 @@ func NewDNSProvider(providerType string, config map[string]string) (challenge.Pr
 		return cloudflare.NewDNSProvider()
 	case "dnspod":
 		return dnspod.NewDNSProvider()
+	case "tencentcloud":
+		return tencentcloud.NewDNSProvider()
+	case "huaweicloud":
+		return huaweicloud.NewDNSProvider()
+	// Add more providers here as needed
 	default:
 		return nil, fmt.Errorf("unsupported dns provider: %s", providerType)
 	}
