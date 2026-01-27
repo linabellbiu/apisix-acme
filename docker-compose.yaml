@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  apisix-acme:
+    build: .
+    container_name: apisix-acme
+    restart: always
+    volumes:
+      - ./config.yaml:/root/data/config.yaml
+      - ./data:/root/data
+    networks:
+      - apisix
+
+networks:
+  apisix:
+    external: true
+    name: apisix # 这里假设你的 APISIX 运行在名为 "apisix" 的 Docker 网络中
