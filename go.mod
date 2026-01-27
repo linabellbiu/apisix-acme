@@ -1,4 +1,4 @@
-module apisix-acme
+module github.com/linabellbiu/apisix-acme
 
 go 1.25.3
 
