@@ -5,10 +5,10 @@ certificates:
   - domains: [ "example.com" ]
     dns_provider: "alidns"
     # 证书过期前多少天进行续期，默认 80 天
-    renew_before_expiry_days: 80
+#    renew_before_expiry_days: 80
   - domains: [ "example.com" ]
     dns_provider: "alidns"
-    renew_before_expiry_days: 89
+#    renew_before_expiry_days: 89
 dns_provider_config:
   ALICLOUD_ACCESS_KEY: "LTAI4..."
   ALICLOUD_SECRET_KEY: "secret..."
