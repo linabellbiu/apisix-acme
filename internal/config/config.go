@@ -8,16 +8,21 @@ import (
 
 // Config 全局配置对象
 type Config struct {
-	Email             string            `yaml:"email"`
-	Domains           []string          `yaml:"domains"`
-	DNSProvider       string            `yaml:"dns_provider"`        // 例如: "alidns", "cloudflare", "dnspod"
-	DNSProviderConfig map[string]string `yaml:"dns_provider_config"` // 对应 Provider 的环境变量映射
+	Email        string        `yaml:"email"`
+	Certificates []Certificate `yaml:"certificates"`
 
 	Apisix ApisixConfig `yaml:"apisix"`
 
 	DataDir        string `yaml:"data_dir"`
 	CronSchedule   string `yaml:"cron_schedule"`
 	LetsEncryptEnv string `yaml:"lets_encrypt_env"`
+}
+
+// Certificate 定义一组需要申请证书的域名及其 DNS 服务商配置
+type Certificate struct {
+	Domains           []string          `yaml:"domains"`
+	DNSProvider       string            `yaml:"dns_provider"`
+	DNSProviderConfig map[string]string `yaml:"dns_provider_config"`
 }
 
 type ApisixConfig struct {

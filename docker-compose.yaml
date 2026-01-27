@@ -14,4 +14,4 @@ services:
 networks:
   apisix:
     external: true
-    name: apisix # 这里假设你的 APISIX 运行在名为 "apisix" 的 Docker 网络中
+    name: apisix_apisix

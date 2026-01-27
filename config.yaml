@@ -24,10 +24,6 @@ apisix:
   admin_key: "your-admin-token"
 
 data_dir: "./data"
-# Cron 表达式: 秒 分 时 日 月 周
-# "0 0 0 * * *" 表示每天凌晨0点运行
-# 注意: robfig/cron/v3 默认标准解析器支持 5 位 (分 时 日 月 周)，如果开启秒级需要特殊 Parser。
-# 这里我们代码默认使用标准 parser (5位)，或者带秒的Parser？
 # robfig/cron/v3 New() 默认是分钟级 (5位)，如果需要秒级需要 cron.WithSeconds()。
 # 为了通用，我们这里假设标准 5 位 Cron: 分 时 日 月 周
 cron_schedule: "0 0 * * *"

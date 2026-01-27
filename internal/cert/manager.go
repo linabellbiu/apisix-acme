@@ -90,14 +90,25 @@ func (m *Manager) Run() {
 }
 
 func (m *Manager) safeProcess() {
-	if err := m.process(); err != nil {
-		log.Printf("[错误] 证书处理失败: %v", err)
+	var hasError bool
+	for _, certCfg := range m.Cfg.Certificates {
+		log.Printf("[开始] 处理证书组: %v", certCfg.Domains)
+		if err := m.process(certCfg); err != nil {
+			log.Printf("[错误] 域名 %v 处理失败: %v", certCfg.Domains, err)
+			hasError = true
+		} else {
+			log.Printf("[成功] 域名 %v 处理完成", certCfg.Domains)
+		}
+	}
+
+	if hasError {
+		log.Println("[完成] 证书检查流程结束，但部分证书处理失败")
 	} else {
-		log.Println("[成功] 本次检查/续期流程结束")
+		log.Println("[完成] 所有证书检查流程成功结束")
 	}
 }
 
-func (m *Manager) process() error {
+func (m *Manager) process(certCfg config.Certificate) error {
 	// 初始化用户
 	user, err := m.getOrCreateUser()
 	if err != nil {
@@ -119,7 +130,8 @@ func (m *Manager) process() error {
 	}
 
 	// 配置 DNS Provider
-	provider, err := dns.NewDNSProvider(m.Cfg.DNSProvider, m.Cfg.DNSProviderConfig)
+	// 使用各个证书独立的 provider 和配置
+	provider, err := dns.NewDNSProvider(certCfg.DNSProvider, certCfg.DNSProviderConfig)
 	if err != nil {
 		return fmt.Errorf("DNS Provider 初始化失败: %v", err)
 	}
@@ -139,8 +151,8 @@ func (m *Manager) process() error {
 	}
 
 	// 检查证书状态
-	certPath := filepath.Join(m.Cfg.DataDir, m.Cfg.Domains[0]+".crt")
-	keyPath := filepath.Join(m.Cfg.DataDir, m.Cfg.Domains[0]+".key")
+	certPath := filepath.Join(m.Cfg.DataDir, certCfg.Domains[0]+".crt")
+	keyPath := filepath.Join(m.Cfg.DataDir, certCfg.Domains[0]+".key")
 
 	needsRenew := true
 	if exists(certPath) {
@@ -156,7 +168,7 @@ func (m *Manager) process() error {
 	if needsRenew {
 		log.Println("正在申请新证书...")
 		req := certificate.ObtainRequest{
-			Domains: m.Cfg.Domains,
+			Domains: certCfg.Domains,
 			Bundle:  true,
 		}
 		certRes, err := client.Certificate.Obtain(req)
@@ -177,7 +189,7 @@ func (m *Manager) process() error {
 
 	// 更新 APISIX
 	log.Println("正在推送证书到 APISIX...")
-	if err := m.ApisixClient.UpdateSSL(m.Cfg.Domains, crt, key); err != nil {
+	if err := m.ApisixClient.UpdateSSL(certCfg.Domains, crt, key); err != nil {
 		return fmt.Errorf("更新 APISIX 失败: %v", err)
 	}
 
