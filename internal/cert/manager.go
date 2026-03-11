@@ -131,8 +131,13 @@ func (m *Manager) process(certCfg config.Certificate) error {
 	}
 
 	// 配置 DNS Provider
-	// 使用证书指定的 Provider 类型，配合全局的 Provider 配置
-	provider, err := dns.NewDNSProvider(certCfg.DNSProvider, m.Cfg.DNSProviderConfig)
+	// 通过 ResolveDNSProvider 解析出实际的 provider 类型和对应的环境变量
+	providerType, providerEnv, err := m.Cfg.ResolveDNSProvider(certCfg.DNSProvider)
+	if err != nil {
+		return fmt.Errorf("DNS Provider 配置解析失败: %v", err)
+	}
+
+	provider, err := dns.NewDNSProvider(providerType, providerEnv)
 	if err != nil {
 		return fmt.Errorf("DNS Provider 初始化失败: %v", err)
 	}

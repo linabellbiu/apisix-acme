@@ -7,6 +7,7 @@
 2. 使用云厂商 DNS API 自动添加验证 TXT 记录。
 3. 申请成功后自动将证书推送到 APISIX Admin API。
 4. 每天检查一次证书过期时间，默认小于 80 天自动续期。
+5. **支持多 DNS 账号**：不同域名可以使用不同云厂商账号的 DNS 凭证。
 
 ## 技术栈
 - Go 1.23+
@@ -14,10 +15,10 @@
 
 ## 支持的 DNS 厂商及配置
 
-在 `config.yaml` 的 `dns_provider_config` 块中配置对应的环境变量。
+在 `config.yaml` 的 `dns_providers` 块中配置对应的环境变量。
 
-| 厂商 | dns_provider | 必需环境变量 | 说明 |
-|------|--------------|--------------|------|
+| 厂商 | type | 必需环境变量 | 说明 |
+|------|------|--------------|------|
 | **阿里云 (Aliyun)** | `alidns` | `ALICLOUD_ACCESS_KEY`<br>`ALICLOUD_SECRET_KEY` | 阿里云的 AccessKey ID 和 Secret |
 | **腾讯云 (Tencent Cloud)** | `tencentcloud` | `TENCENTCLOUD_SECRET_ID`<br>`TENCENTCLOUD_SECRET_KEY` | 腾讯云 API 密钥 |
 | **DNSPod (国内版)** | `dnspod` | `DNSPOD_API_KEY` | 格式为 `ID,Token` (例如 `12345,abcdef...`) |
@@ -32,34 +33,47 @@
 email: "your-email@example.com"
 
 # 证书配置列表
+# dns_provider 引用下方 dns_providers 中定义的名称
 certificates:
   - domains: [ "example.com", "*.example.com" ]
-    dns_provider: "alidns"
-    # 证书过期前多少天进行续期，默认 80 天
-    # 建议每个申请的证书使用不同的过期时间，防止集中申请触发限流
+    dns_provider: "aliyun-main"
     renew_before_expiry_days: 80
 
-  - domains: [ "other-domain.com" ]
-    dns_provider: "tencentcloud"
+  - domains: [ "other-domain.cn" ]
+    dns_provider: "aliyun-secondary"
     renew_before_expiry_days: 75
 
-# 全局环境变量配置（集合所有厂商需要的 Key）
-dns_provider_config:
-  # Aliyun
-  ALICLOUD_ACCESS_KEY: "LTAI4..."
-  ALICLOUD_SECRET_KEY: "secret..."
-  
-  # Tencent Cloud
-  TENCENTCLOUD_SECRET_ID: "AKID..."
-  TENCENTCLOUD_SECRET_KEY: "secret..."
+  - domains: [ "global-site.com" ]
+    dns_provider: "my-cloudflare"
+    renew_before_expiry_days: 70
+
+# 多 DNS Provider 配置
+# 每个 key 是自定义名称，证书通过 dns_provider 字段引用
+dns_providers:
+  aliyun-main:
+    type: "alidns"
+    env:
+      ALICLOUD_ACCESS_KEY: "LTAI4..."
+      ALICLOUD_SECRET_KEY: "secret1..."
+
+  aliyun-secondary:
+    type: "alidns"
+    env:
+      ALICLOUD_ACCESS_KEY: "LTAI5..."
+      ALICLOUD_SECRET_KEY: "secret2..."
+
+  my-cloudflare:
+    type: "cloudflare"
+    env:
+      CLOUDFLARE_DNS_API_TOKEN: "your-token..."
 
 apisix:
-  admin_url: "http://apisix:9180" # APISIX Admin API 地址
-  admin_key: "your-admin-token"   # APISIX Admin Token
+  admin_url: "http://apisix:9180"
+  admin_key: "your-admin-token"
 
 data_dir: "./data"
-cron_schedule: "0 0 * * *" # 每天 0点 执行
-lets_encrypt_env: "production" # "staging" 用于测试，"production" 用于生产
+cron_schedule: "0 0 * * *"
+lets_encrypt_env: "production"
 ```
 
 ## 快速开始

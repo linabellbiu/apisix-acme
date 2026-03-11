@@ -14,11 +14,12 @@ import (
 )
 
 // NewDNSProvider 基于配置的类型和环境变量映射创建一个 DNS Provider
-// 这是一个工厂方法，通过字符串 switch case 来决定实例化哪个 Provider
-func NewDNSProvider(providerType string, config map[string]string) (challenge.Provider, error) {
+// providerType: Provider 类型（如 alidns, cloudflare 等）
+// env: 该 Provider 所需的环境变量键值对
+func NewDNSProvider(providerType string, env map[string]string) (challenge.Provider, error) {
 	// Lego 的 Provider 大多通过读取环境变量来初始化
 	// 这里将配置文件映射覆盖到环境变量中
-	for k, v := range config {
+	for k, v := range env {
 		os.Setenv(k, v)
 	}
 

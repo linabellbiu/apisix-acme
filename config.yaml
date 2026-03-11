@@ -3,15 +3,25 @@ email: "your-email@example.com"
 # 证书配置列表
 certificates:
   - domains: [ "example.com" ]
-    dns_provider: "alidns"
-    # 证书过期前多少天进行续期，默认 80 天
-#    renew_before_expiry_days: 80
-  - domains: [ "example.com" ]
-    dns_provider: "alidns"
-#    renew_before_expiry_days: 89
-dns_provider_config:
-  ALICLOUD_ACCESS_KEY: "LTAI4..."
-  ALICLOUD_SECRET_KEY: "secret..."
+    dns_provider: "aliyun-1"
+    renew_before_expiry_days: 80     # 证书过期前多少天进行续期，默认 80 天
+  - domains: [ "example2.com" ]
+    dns_provider: "aliyun-2"
+    renew_before_expiry_days: 89
+
+# 多 DNS Provider 配置（推荐）
+# 每个 key 是自定义名称，证书通过 dns_provider 字段引用
+dns_providers:
+  aliyun-1:
+    type: "alidns"
+    env:
+      ALICLOUD_ACCESS_KEY: "LTAI4..."
+      ALICLOUD_SECRET_KEY: "secret1..."
+  aliyun-2:
+    type: "alidns"
+    env:
+      ALICLOUD_ACCESS_KEY: "LTAI5..."
+      ALICLOUD_SECRET_KEY: "secret2..."
 
 apisix:
   admin_url: "http://apisix:9180"
