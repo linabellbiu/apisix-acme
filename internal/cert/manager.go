@@ -1,6 +1,7 @@
 package cert
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -11,7 +12,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/go-acme/lego/v4/certcrypto"
@@ -70,6 +73,10 @@ func (m *Manager) Run() {
 
 	log.Println("证书管家已启动，正在初始化任务...")
 
+	// 创建可取消的 context，用于优雅关闭
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// 立即执行一次
 	m.safeProcess()
 
@@ -86,8 +93,21 @@ func (m *Manager) Run() {
 	c.Start()
 	log.Printf("定时任务已启动，Cron 表达式: %s", m.Cfg.CronSchedule)
 
-	// 阻塞主程
-	select {}
+	// 监听系统信号，优雅退出
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case sig := <-sigCh:
+		log.Printf("收到信号 %v，正在优雅关闭...", sig)
+	case <-ctx.Done():
+		log.Println("上下文已取消，正在关闭...")
+	}
+
+	// 停止定时任务调度器，等待正在执行的任务完成
+	stopCtx := c.Stop()
+	<-stopCtx.Done()
+	log.Println("服务已安全退出")
 }
 
 func (m *Manager) safeProcess() {
