@@ -17,7 +17,8 @@ RUN go build -o apisix-acme-service .
 FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/alpine:3.21
 WORKDIR /root/
 COPY --from=builder /app/apisix-acme-service .
-RUN apk add --no-cache ca-certificates
+RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.aliyun.com#g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates
 
 # Expose data volume
 VOLUME ["/root/data"]
