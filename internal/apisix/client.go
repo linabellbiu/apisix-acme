@@ -29,6 +29,7 @@ func NewClient(cfg config.ApisixConfig) *Client {
 func (c *Client) UpdateSSL(domains []string, cert, key []byte) error {
 	// Create an ID based on the primary domain
 	sslID := strings.ReplaceAll(domains[0], ".", "_")
+	sslID = strings.ReplaceAll(sslID, "*", "wildcard")
 
 	payload := map[string]interface{}{
 		"cert": string(cert),
